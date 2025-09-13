@@ -1,0 +1,39 @@
+image: node:20-alpine
+
+stages:
+  - build
+  - deploy
+
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - node_modules/
+
+variables:
+  CI: "true"   # lets Vite set BASE_URL
+
+build:
+  stage: build
+  script:
+    - npm ci
+    - npm run build
+    - mkdir -p public
+    - cp -r dist/* public/
+    # SPA fallback so deep links (/tree) work:
+    - cp public/index.html public/404.html
+  artifacts:
+    paths:
+      - public
+  only:
+    - branches
+
+pages:
+  stage: deploy
+  script:
+    - echo "Deploying GitLab Pages"
+  artifacts:
+    paths:
+      - public
+  only:
+    - main
+    - master
